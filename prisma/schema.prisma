@@ -1,0 +1,149 @@
+// Trim.ph - Affiliate marketing ecosystem
+// Three roles: vendor_digital, vendor_traditional, affiliate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         String // 'vendor_digital' | 'vendor_traditional' | 'affiliate'
+  city         String?
+  isOnline     Boolean  @default(false)
+  lastSeen     DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  campaigns      Campaign[]
+  trackingLinks  TrackingLink[]
+  conversions    Conversion[]
+  wallet         Wallet?
+  payoutsMade    Payout[]       @relation("PayoutVendor")
+  payoutsReceived Payout[]      @relation("PayoutAffiliate")
+  chatMessages   ChatMessage[]
+  chatMembers    ChatRoomMember[]
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  vendorId    String
+  vendor      User     @relation(fields: [vendorId], references: [id])
+  title       String
+  description String
+  type        String // 'digital' | 'take_one'
+  targetUrl   String? // for digital campaigns
+  rewardType  String // 'click' | 'email' | 'walk_in'
+  rewardAmount Float
+  maxUses     Int? // max times the code/link can be used (null = unlimited)
+  city        String?
+  category    String?
+  isActive    Boolean  @default(true)
+  isSeeded    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  trackingLinks TrackingLink[]
+  takeOneCodes  TakeOneCode[]
+  conversions   Conversion[]
+  chatRooms     ChatRoom[]
+}
+
+model TrackingLink {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  affiliateId String
+  affiliate   User     @relation(fields: [affiliateId], references: [id])
+  uniqueSlug  String   @unique
+  createdAt   DateTime @default(now())
+
+  conversions Conversion[]
+}
+
+model Conversion {
+  id             String    @id @default(cuid())
+  campaignId     String
+  campaign       Campaign  @relation(fields: [campaignId], references: [id])
+  trackingLinkId String?
+  trackingLink   TrackingLink? @relation(fields: [trackingLinkId], references: [id])
+  affiliateId    String?
+  affiliate      User?     @relation(fields: [affiliateId], references: [id])
+  visitorIp      String?
+  capturedEmail  String?
+  offlineCode    String?
+  status         String    @default("verified") // 'pending' | 'verified' | 'flagged' | 'paid'
+  createdAt      DateTime  @default(now())
+  redeemedAt     DateTime?
+  paidAt         DateTime?
+}
+
+model TakeOneCode {
+  id         String    @id @default(cuid())
+  campaignId String
+  campaign   Campaign  @relation(fields: [campaignId], references: [id])
+  code       String    @unique // always starts with TRIM
+  isRedeemed Boolean   @default(false)
+  redeemedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  entries   String   // JSON array: [{name: "GCash", value: "0917..."}, ...]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payout {
+  id            String   @id @default(cuid())
+  vendorId      String
+  vendor        User     @relation("PayoutVendor", fields: [vendorId], references: [id])
+  affiliateId   String
+  affiliate     User     @relation("PayoutAffiliate", fields: [affiliateId], references: [id])
+  campaignId    String?
+  amount        Float
+  conversionIds String   // JSON array of conversion ids
+  note          String?
+  createdAt     DateTime @default(now())
+}
+
+model ChatRoom {
+  id         String   @id @default(cuid())
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  name       String
+  createdAt  DateTime @default(now())
+  members    ChatRoomMember[]
+  messages   ChatMessage[]
+}
+
+model ChatRoomMember {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@unique([roomId, userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
