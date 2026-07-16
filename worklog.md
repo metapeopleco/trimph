@@ -27,3 +27,28 @@ Stage Summary:
 - All three user roles functional with real data tracking (clicks, emails, walk-ins, payouts).
 - TRIM codes enforced, max-uses enforced, human-quiz anti-fraud, online presence, QR + PDF export, light/dark themes, responsive.
 - Dev server runs clean on port 3000; lint passes (0 errors); chat service runs on 3003.
+
+---
+Task ID: redesign-1
+Agent: main (orchestrator)
+Task: Redesign landing page to match reference UI/UX — no border radius, bigger headings, better hero, full-width container, add "No fees. No catch. Ever." section, use the new form UI from pasted reference image.
+
+Work Log:
+- Set --radius to 0px globally and added `border-radius: 0 !important` to all elements via @layer base — enforces sharp corners everywhere.
+- Redesigned AuthForm to match pasted reference: "Become an affiliate/vendor" title + "Log in or sign up — track your earnings in ₱" subtitle + "01" counter, two toggle buttons (I'm a vendor / I'm an affiliate) with icons + subtext, vendor sub-toggle (App/website vs Physical store), uppercase EMAIL/PASSWORD labels, descriptive earning text, full-width black "Sign up / Log in" button with arrow, secondary "Existing affiliate?" link.
+- Rewrote landing page with full-width sections (max-w-7xl), bigger headings (hero text-8xl, sections text-6xl), better hero (eyebrow + huge headline + CTAs).
+- Added "Start in 30 seconds" section with 3 steps + the new form card.
+- Browse programs: full-width filter bar (bordered, no gaps) + 3-col grid with borderless cards (shared borders).
+- "Three sides, one network" section with 3 NetworkCards.
+- "Secure Click — humans only, bots blocked" with ₱0 display card.
+- Added "No fees. No catch. Ever." section on inverted black background with two CTAs.
+- Footer with logo, columns, JOph.app credit.
+- Removed chat widget and ad banners from landing (per instructions).
+
+Stage Summary:
+- All elements now have 0 border radius (verified: 0 rounded elements in DOM).
+- Headlines much bigger (text-7xl/8xl hero, text-6xl sections).
+- Full-width container (max-w-7xl) with edge-to-edge section backgrounds.
+- New form UI matches reference: toggle, uppercase labels, descriptive text, black button.
+- "No fees. No catch. Ever." section added on black background.
+- Lint passes (0 errors); dev server clean; signup flow verified working.
