@@ -81,7 +81,7 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
         >
           <Store className="h-5 w-5 shrink-0" />
           <div>
-            <p className="text-sm font-medium">I&apos;m a vendor</p>
+            <p className="text-sm">I&apos;m a vendor</p>
             <p className={cn("text-xs", tab === "vendor" ? "text-background/70" : "text-muted-foreground")}>Create campaigns</p>
           </div>
         </button>
@@ -95,7 +95,7 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
         >
           <UserIcon className="h-5 w-5 shrink-0" />
           <div>
-            <p className="text-sm font-medium">I&apos;m an affiliate</p>
+            <p className="text-sm">I&apos;m an affiliate</p>
             <p className={cn("text-xs", tab === "affiliate" ? "text-background/70" : "text-muted-foreground")}>Promote &amp; earn</p>
           </div>
         </button>
@@ -164,7 +164,7 @@ export function AuthForm({ onDone }: { onDone?: () => void }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-12 bg-foreground text-background text-sm font-medium flex items-center justify-center gap-2 hover:bg-foreground/90 transition-colors disabled:opacity-50"
+          className="w-full h-12 bg-foreground text-background text-sm flex items-center justify-center gap-2 hover:bg-foreground/90 transition-colors disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
           {loading ? "Please wait…" : "Sign up / Log in"}

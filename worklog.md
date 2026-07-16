@@ -52,3 +52,21 @@ Stage Summary:
 - New form UI matches reference: toggle, uppercase labels, descriptive text, black button.
 - "No fees. No catch. Ever." section added on black background.
 - Lint passes (0 errors); dev server clean; signup flow verified working.
+
+---
+Task ID: fix-buttons-hero
+Agent: main (orchestrator)
+Task: Fix the buttons (sharp, not bold) and add the hero design with featured offer sidebar card. Strictly only bold on headings.
+
+Work Log:
+- Removed `rounded-md`, `font-medium`, and `shadow-xs` from Button component variants — all buttons now have sharp corners and regular-weight text.
+- Strengthened the "only headings bold" CSS rule with `!important` on font-weight for all non-heading elements (p, span, div, label, button, a, li, strong, b, .font-medium, .font-semibold, .font-bold) and `!important` 700 weight on headings + .font-headline. This strictly enforces bold only on headings regardless of utility classes.
+- Removed all `font-medium` classes from the auth-form toggle buttons and submit button.
+- Added hero two-column layout: left = headline + CTAs + subtext, right = new FeaturedOfferCard component.
+- FeaturedOfferCard: shows the highest-payout live program with title, description, QR code (96px), type/category/city badges, vendor online status, affiliate payout in ₱, Take deal button + copy-link button, and the shareable tracking link. Respects seeded-campaign toast. No fake/mockup stats — uses real marketplace data.
+
+Stage Summary:
+- Verified via DOM inspection: ALL buttons are sharp (0 border-radius) and not bold (font-weight 400/normal).
+- Verified: only headings (h1-h6, .font-headline) are bold across the entire page.
+- Hero now matches reference: two-column with featured offer card (QR + payout + Take deal) on the right.
+- Lint passes (0 errors); dev server clean.

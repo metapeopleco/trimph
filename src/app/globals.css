@@ -132,13 +132,17 @@
     font-weight: 700;
     letter-spacing: -0.01em;
   }
-  /* Ensure body / UI text never becomes bold except via heading classes */
-  p, span, div, label, button, a, li, td, th, input, textarea, select {
-    font-weight: 400;
+  /* STRICTLY: body / UI text never becomes bold — override any utility class */
+  p, span, div, label, button, a, li, td, th, input, textarea, select,
+  code, pre, small, strong, b, .font-medium, .font-semibold, .font-bold {
+    font-weight: 400 !important;
+  }
+  /* But headings themselves can still be bold */
+  h1, h2, h3, h4, h5, h6, .font-headline {
+    font-weight: 700 !important;
   }
   .font-headline {
     font-family: var(--font-fraunces), Georgia, serif;
-    font-weight: 700;
     letter-spacing: -0.01em;
   }
 }
