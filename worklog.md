@@ -70,3 +70,26 @@ Stage Summary:
 - Verified: only headings (h1-h6, .font-headline) are bold across the entire page.
 - Hero now matches reference: two-column with featured offer card (QR + payout + Take deal) on the right.
 - Lint passes (0 errors); dev server clean.
+
+---
+Task ID: fix-tracking-buttons-width
+Agent: main (orchestrator)
+Task: 1) Full-width container (not boxed), 2) Fix "Create your first campaign" button (white on white), 3) Audit and fix tracking components — clicks not reflecting on affiliate dashboard, double counting on back button.
+
+Work Log:
+- **Full-width**: Replaced all `max-w-7xl mx-auto px-6` with `px-6 sm:px-10 lg:px-16` across the landing page — sections now span edge to edge with no max-width cap.
+- **Button fix**: The "No fees" section (dark bg) had "Create your first campaign" with `text-background` (white text) on `bg-background` (white button) = invisible. Swapped to: primary button = white bg + dark text; secondary = transparent + light text + subtle border.
+- **Tracking audit — root cause found**: The tracking page's data fetch (`/c/[id]/data`) was NOT passing the URL query params (`aff`, `s`). So the data endpoint returned `slug: null, affiliateId: null`. The click API then couldn't resolve the tracking link, stored `affiliateId: null, trackingLinkId: null` on the conversion. Result: vendor saw the click (conversion existed) but with no affiliate; affiliate saw 0 (query by user.id didn't match null).
+- **Tracking fix 1**: Tracking page now passes `window.location.search` to the data fetch, so `aff` and `s` reach the server. Data endpoint returns the correct slug + affiliateId.
+- **Tracking fix 2**: Click API now validates affiliateId — prefers the tracking link's affiliateId (source of truth from authenticated take-deal flow); falls back to validating the `aff` param against the User table (must be a real affiliate). No more null or invalid affiliateIds.
+- **Tracking fix 3**: Leads/capture API got the same affiliate validation + slug resolution.
+- **Dedup fix (client)**: Tracking page uses `sessionStorage` keyed by `campaign+slug` to skip re-calling the click API if the visitor already clicked this session (prevents back-button double counting).
+- **Dedup fix (server)**: Click API checks for an existing conversion from the same IP+campaign within 10 minutes; if found, returns the existing conversion ID instead of creating a duplicate.
+- Cleaned up 4 stale conversions with null/invalid affiliateId from earlier testing.
+
+Stage Summary:
+- Verified end-to-end: affiliate takes deal → visitor clicks tracking link → solves quiz → click registered with correct affiliateId + trackingLinkId → affiliate dashboard shows 1 click, ₱2.50 owed → vendor dashboard shows same click with affiliate listed.
+- Back-button dedup verified: re-visiting the tracking link still shows 1 click (sessionStorage + server IP dedup both work).
+- Full-width container confirmed (no horizontal scroll).
+- "No fees" section buttons both readable (white-on-black and black-on-white).
+- Lint passes (0 errors).

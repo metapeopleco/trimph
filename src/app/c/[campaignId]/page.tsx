@@ -40,7 +40,9 @@ export default function TrackingPage({ params }: { params: Promise<{ campaignId:
   const [conversionId, setConversionId] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    fetch(`/c/${campaignId}/data`)
+    // Pass the query params (aff, s) to the data endpoint so it can resolve the affiliate
+    const search = typeof window !== "undefined" ? window.location.search : ""
+    fetch(`/c/${campaignId}/data${search}`)
       .then((r) => r.json())
       .then((d) => {
         if (d.error) {
@@ -74,6 +76,14 @@ export default function TrackingPage({ params }: { params: Promise<{ campaignId:
       return
     }
     // correct — register the click
+    // Client-side dedup: don't re-register if we already clicked this campaign+slug this session.
+    const dedupKey = `trimph:click:${data!.campaign.id}:${data!.slug || data!.affiliateId || "anon"}`
+    const alreadyClicked = sessionStorage.getItem(dedupKey)
+    if (alreadyClicked) {
+      // Skip the API call — just move forward to avoid double counting
+      setStep("verified")
+      return
+    }
     try {
       const res = await fetch("/api/tracker/click", {
         method: "POST",
@@ -86,7 +96,10 @@ export default function TrackingPage({ params }: { params: Promise<{ campaignId:
         }),
       })
       const json = await res.json()
-      if (json.conversionId) setConversionId(json.conversionId)
+      if (json.conversionId) {
+        setConversionId(json.conversionId)
+        sessionStorage.setItem(dedupKey, json.conversionId)
+      }
       if (json.exhausted) {
         setError("This campaign has reached its maximum redemptions.")
         return
@@ -107,6 +120,7 @@ export default function TrackingPage({ params }: { params: Promise<{ campaignId:
           conversionId,
           campaignId: data!.campaign.id,
           affiliateId: data!.affiliateId,
+          slug: data!.slug,
           email,
         }),
       })

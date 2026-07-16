@@ -85,7 +85,7 @@ export function LandingPage() {
 
       {/* Header — full width */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="px-6 sm:px-10 lg:px-16 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <LogoMark size={28} />
             <span className="font-headline text-xl tracking-tight">
@@ -111,7 +111,7 @@ export function LandingPage() {
 
       {/* Hero — full width, two-column with featured offer card */}
       <section className="relative border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 pt-16 pb-16 sm:pt-24 sm:pb-20">
+        <div className="px-6 sm:px-10 lg:px-16 pt-16 pb-16 sm:pt-24 sm:pb-20">
           <div className="grid lg:grid-cols-[1fr_380px] gap-12 lg:gap-16 items-start">
             {/* Left: headline + CTAs */}
             <div>
@@ -149,7 +149,7 @@ export function LandingPage() {
 
       {/* Start in 30 seconds — form section */}
       <section id="start" className="border-b border-border bg-secondary/30">
-        <div className="max-w-7xl mx-auto px-6 py-20 sm:py-28">
+        <div className="px-6 sm:px-10 lg:px-16 py-20 sm:py-28">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
             {/* Left: copy + steps */}
             <div>
@@ -188,7 +188,7 @@ export function LandingPage() {
 
       {/* Browse programs — full width */}
       <section id="browse" className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-20 sm:py-24">
+        <div className="px-6 sm:px-10 lg:px-16 py-20 sm:py-24">
           <div className="mb-10">
             <h2 className="font-headline text-5xl sm:text-6xl leading-[0.95] tracking-tight">Browse programs by city.</h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
@@ -248,7 +248,7 @@ export function LandingPage() {
 
       {/* Three sides, one network */}
       <section id="how" className="border-b border-border bg-secondary/30">
-        <div className="max-w-7xl mx-auto px-6 py-20 sm:py-24">
+        <div className="px-6 sm:px-10 lg:px-16 py-20 sm:py-24">
           <h2 className="font-headline text-5xl sm:text-6xl leading-[0.95] tracking-tight mb-4">Three sides, one network.</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mb-12">
             Whether you build apps, run a local shop, or have an audience — Trim.ph connects you to the others, free.
@@ -293,7 +293,7 @@ export function LandingPage() {
 
       {/* Secure Click */}
       <section className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-20 sm:py-24">
+        <div className="px-6 sm:px-10 lg:px-16 py-20 sm:py-24">
           <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground mb-6">
@@ -332,7 +332,7 @@ export function LandingPage() {
 
       {/* No fees. No catch. Ever. */}
       <section id="fees" className="border-b border-border bg-foreground text-background">
-        <div className="max-w-7xl mx-auto px-6 py-24 sm:py-32 text-center">
+        <div className="px-6 sm:px-10 lg:px-16 py-24 sm:py-32 text-center">
           <h2 className="font-headline text-5xl sm:text-7xl lg:text-8xl leading-[0.92] tracking-tight">
             No fees.<br />No catch.<br />
             <span className="italic text-background/60">Ever.</span>
@@ -342,10 +342,10 @@ export function LandingPage() {
             No subscriptions. No transaction cuts. No paywalls. Just creators, vendors, and affiliates growing together.
           </p>
           <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" variant="outline" className="h-14 px-10 text-base border-background text-background hover:bg-background hover:text-foreground" onClick={scrollToStart}>
+            <Button size="lg" className="h-14 px-10 text-base bg-background text-foreground hover:bg-background/90" onClick={scrollToStart}>
               Create your first campaign
             </Button>
-            <Button size="lg" className="h-14 px-10 text-base bg-background text-foreground hover:bg-background/90" onClick={scrollToBrowse}>
+            <Button size="lg" variant="outline" className="h-14 px-10 text-base border-background/30 text-background hover:bg-background/10 hover:text-background" onClick={scrollToBrowse}>
               Browse the marketplace
             </Button>
           </div>
@@ -354,7 +354,7 @@ export function LandingPage() {
 
       {/* Footer — full width */}
       <footer className="mt-auto bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-14">
+        <div className="px-6 sm:px-10 lg:px-16 py-14">
           <div className="grid md:grid-cols-[1fr_auto_auto] gap-10">
             <div>
               <LogoWord size={28} />
