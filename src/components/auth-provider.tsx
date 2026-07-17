@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { SessionProvider } from "next-auth/react"
+import { SessionProvider, useSession } from "next-auth/react"
 
 export type AuthUser = {
   id: string
@@ -20,51 +20,72 @@ interface AuthState {
 
 const AuthContext = React.createContext<AuthState | null>(null)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+function AuthInner({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession()
   const [user, setUser] = React.useState<AuthUser | null>(null)
-  const [loading, setLoading] = React.useState(true)
+
+  // Sync the NextAuth session into our typed user object.
+  React.useEffect(() => {
+    if (status === "loading") return
+    if (session?.user) {
+      const u = session.user as any
+      setUser({
+        id: u.id,
+        email: u.email,
+        name: u.name ?? null,
+        role: u.role,
+        city: u.city ?? null,
+      })
+    } else {
+      setUser(null)
+    }
+  }, [session, status])
 
   const refresh = React.useCallback(async () => {
     try {
       const res = await fetch("/api/auth/session")
-      if (!res.ok) {
-        setUser(null)
-        return
-      }
       const data = await res.json()
       if (data?.user) {
+        const u = data.user
         setUser({
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name ?? null,
-          role: data.user.role,
-          city: data.user.city ?? null,
+          id: u.id,
+          email: u.email,
+          name: u.name ?? null,
+          role: u.role,
+          city: u.city ?? null,
         })
       } else {
         setUser(null)
       }
     } catch {
       setUser(null)
-    } finally {
-      setLoading(false)
     }
   }, [])
 
   const signOut = React.useCallback(async () => {
-    await fetch("/api/auth/signout", { method: "POST" })
+    // Clear local state immediately for instant UI feedback
     setUser(null)
+    // Call NextAuth signout (handles cookie clearing server-side)
+    try {
+      await fetch("/api/auth/signout", { method: "POST" })
+    } catch {
+      // ignore — we still redirect
+    }
+    // Hard redirect to clear any cached client state
     window.location.href = "/"
   }, [])
 
-  React.useEffect(() => {
-    refresh()
-  }, [refresh])
+  return (
+    <AuthContext.Provider value={{ user, loading: status === "loading", refresh, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
 
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <AuthContext.Provider value={{ user, loading, refresh, signOut }}>
-        {children}
-      </AuthContext.Provider>
+      <AuthInner>{children}</AuthInner>
     </SessionProvider>
   )
 }

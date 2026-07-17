@@ -113,3 +113,21 @@ Stage Summary:
 - Physical store vendors have full affiliate tracking + payout capability.
 - Chat service running on 3003, socket connects live, messages work.
 - Lint passes (0 errors); all verified via Agent Browser.
+
+---
+Task ID: fix-session-persistence
+Agent: main (orchestrator)
+Task: Account sessions killed on page reload — users get logged out.
+
+Work Log:
+- Root cause investigation: The NEXTAUTH_SECRET env var had been lost (env file reset during the conversation), causing NextAuth to fall back to the hardcoded default secret. Any JWT tokens signed with a previous secret were invalid, so sessions appeared to work right after login but failed on reload.
+- Restored .env with stable NEXTAUTH_SECRET, NEXTAUTH_URL, NEXT_PUBLIC_APP_URL.
+- Rewrote AuthProvider to use NextAuth's official `useSession()` hook (via SessionProvider) instead of a manual one-time fetch. The `useSession` hook automatically re-validates the JWT cookie on every navigation/reload and keeps the client state in sync with the server session — this is the recommended pattern and is more robust than manual fetching.
+- The `loading` state now derives from `useSession`'s `status` ("loading" | "authenticated" | "unauthenticated"), eliminating race conditions where the dashboard could render before the session was verified.
+- signOut now clears local state immediately for instant UI feedback, then calls the server signout endpoint, then hard-redirects to "/" to flush any cached client state.
+
+Stage Summary:
+- Sessions now persist across unlimited page reloads (verified 5 consecutive reloads, all OK).
+- Dashboard correctly loads after reload (verified "Local business dashboard" heading + Overview tab appear).
+- Lint passes (0 errors).
+- Root cause was the lost NEXTAUTH_SECRET env var + the manual session fetch being less robust than NextAuth's built-in useSession hook.
