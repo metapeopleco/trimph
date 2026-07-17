@@ -131,3 +131,27 @@ Stage Summary:
 - Dashboard correctly loads after reload (verified "Local business dashboard" heading + Overview tab appear).
 - Lint passes (0 errors).
 - Root cause was the lost NEXTAUTH_SECRET env var + the manual session fetch being less robust than NextAuth's built-in useSession hook.
+
+---
+Task ID: ticket-animation
+Agent: main (orchestrator)
+Task: Animate the hero card like a ticket coming out as paper, centered in the right column (based on reference image).
+
+Work Log:
+- Added CSS keyframes to globals.css:
+  - `ticket-emerge`: ticket slides up from below (translateY 120% → 0) with a slight rotation (-3deg → -2deg) and scale (0.92 → 1), opacity fades in. Uses a bouncy cubic-bezier easing for a "paper emerging" feel.
+  - `ticket-settle`: infinite subtle floating loop (translateY 0 → -4px → 0, rotation -2deg → -1.5deg → -2deg) so the ticket gently breathes after emerging.
+  - `ticket-shadow`: shadow fades in and scales from 0.4 → 1 to match the ticket's arrival.
+- Added supporting CSS classes: `.ticket-wrapper` (perspective + flex centering + min-height), `.ticket-slot` (the dispenser slot at top), `.ticket-shadow` (soft radial gradient blur under the ticket), `.ticket` (the card with layered box-shadows for depth), `.ticket-perf` (perforated divider with circular notches on left/right edges using ::before/::after pseudo-elements).
+- Hover effect: on hover the ticket lifts (-6px), straightens to 0deg rotation, scales to 1.02, and the shadow deepens — interactive feedback.
+- Respects `prefers-reduced-motion`: animations disabled, ticket shows static tilt.
+- Rewrote FeaturedOfferCard to use the ticket layout: slot at top, ticket with perforated divider splitting it into a "stub" (offer title + QR + badges) and "body" (payout + Take deal button). Removed the old sticky card layout.
+- Updated hero grid to `lg:grid-cols-[1fr_400px]` with `items-center` so the ticket is vertically centered in the right column.
+- Added `overflow-hidden` to the hero section so the emerging animation doesn't cause horizontal scroll.
+
+Stage Summary:
+- Ticket animates in from below like paper coming out of a slot, settles with a gentle floating loop.
+- Perforated divider with circular notches gives it a real ticket/coupon look.
+- Slight -2deg tilt + soft shadow = 3D depth (matches reference image).
+- Centered in the right column of the hero.
+- Lint passes (0 errors); animations verified applied via computed styles.

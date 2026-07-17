@@ -119,9 +119,9 @@ export function LandingPage() {
       </header>
 
       {/* Hero — full width, two-column with featured offer card */}
-      <section className="relative border-b border-border">
+      <section className="relative border-b border-border overflow-hidden">
         <div className="px-6 sm:px-10 lg:px-16 pt-16 pb-16 sm:pt-24 sm:pb-20">
-          <div className="grid lg:grid-cols-[1fr_380px] gap-12 lg:gap-16 items-start">
+          <div className="grid lg:grid-cols-[1fr_400px] gap-12 lg:gap-16 items-center">
             {/* Left: headline + CTAs */}
             <div>
               <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground mb-6">
@@ -436,13 +436,16 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
 
   if (!featured) {
     return (
-      <div className="border border-border bg-card p-8 lg:sticky lg:top-24">
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offer</span>
-          <span className="h-2 w-2 bg-emerald-500 animate-pulse" />
+      <div className="ticket-wrapper">
+        <div className="ticket-slot" />
+        <div className="ticket p-8 w-full max-w-sm">
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offer</span>
+            <span className="h-2 w-2 bg-emerald-500 animate-pulse" />
+          </div>
+          <p className="font-headline text-3xl mb-2">Loading offers…</p>
+          <p className="text-sm text-muted-foreground">Checking the live marketplace.</p>
         </div>
-        <p className="font-headline text-3xl mb-2">Loading offers…</p>
-        <p className="text-sm text-muted-foreground">Checking the live marketplace.</p>
       </div>
     )
   }
@@ -457,98 +460,101 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
     : `/ walk-in`
 
   return (
-    <div className="border border-border bg-card p-6 lg:sticky lg:top-24">
-      <div className="flex items-center justify-between mb-5">
-        <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offer</span>
-        <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <span className={cn("h-1.5 w-1.5", featured.vendor.isOnline ? "bg-emerald-500" : "bg-muted-foreground/40")} />
-          {featured.vendor.isOnline ? "vendor online" : "vendor offline"}
-        </span>
-      </div>
+    <div className="ticket-wrapper">
+      <div className="ticket-slot" />
+      <div className="ticket-shadow" />
+      <div className="ticket w-full max-w-sm">
+        {/* Ticket header / stub */}
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offer</span>
+            <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span className={cn("h-1.5 w-1.5", featured.vendor.isOnline ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+              {featured.vendor.isOnline ? "vendor online" : "vendor offline"}
+            </span>
+          </div>
 
-      <div className="flex items-start justify-between gap-4 mb-4">
-        <div className="min-w-0">
-          <h3 className="font-headline text-2xl leading-tight mb-2">{featured.title}</h3>
-          <p className="text-sm text-muted-foreground">{featured.description}</p>
+          <div className="flex items-start gap-4 mb-4">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-headline text-xl leading-tight mb-1.5">{featured.title}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">{featured.description}</p>
+            </div>
+            <div className="border border-border p-1.5 bg-white shrink-0">
+              <QrCodeSvg value={absShareUrl} size={72} />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {isTakeOne ? (
+              <Badge variant="secondary" className="text-[10px]"><Store className="h-2.5 w-2.5 mr-1" /> In-store</Badge>
+            ) : (
+              <Badge variant="secondary" className="text-[10px]"><Link2 className="h-2.5 w-2.5 mr-1" /> Digital</Badge>
+            )}
+            {featured.category && <Badge variant="outline" className="text-[10px]">{featured.category}</Badge>}
+            {featured.city && <Badge variant="outline" className="text-[10px]"><MapPin className="h-2.5 w-2.5 mr-1" />{featured.city}</Badge>}
+          </div>
         </div>
-        <div className="border border-border p-2 bg-white shrink-0">
-          <QrCodeSvg value={absShareUrl} size={96} />
+
+        {/* Perforated divider */}
+        <div className="ticket-perf" />
+
+        {/* Ticket body — payout + actions */}
+        <div className="p-5">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Affiliate payout</p>
+          <p className="font-headline text-4xl tabular">
+            ₱{featured.rewardAmount.toFixed(2)}
+            <span className="text-base text-muted-foreground ml-1.5">{rewardLabel}</span>
+          </p>
+
+          {featured.isSeeded && (
+            <p className="text-[10px] text-muted-foreground mt-2 italic">
+              Beta sample — real campaigns replace this after Aug 15, 2026.
+            </p>
+          )}
+
+          <div className="mt-4 flex gap-0">
+            <Button
+              className="flex-1 h-11"
+              onClick={() => {
+                if (!user || user.role !== "affiliate") {
+                  document.getElementById("start")?.scrollIntoView({ behavior: "smooth" })
+                  return
+                }
+                if (featured.isSeeded) {
+                  toast.warning("This is a seeded campaign for mockup", {
+                    description: "Please choose one of the real active campaigns. Admin will remove these seed campaigns at the end of Beta Test stage on Aug 15, 2026.",
+                    duration: 8000,
+                  })
+                  return
+                }
+                fetch("/api/links", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ campaignId: featured.id }),
+                }).then(() => {
+                  toast.success("Deal taken!", { description: "Your tracking link is ready." })
+                  window.location.hash = "#dashboard"
+                  window.location.reload()
+                })
+              }}
+            >
+              Take deal <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 border-l-0"
+              onClick={() => {
+                navigator.clipboard?.writeText(absShareUrl)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 1500)
+              }}
+              aria-label="Copy link"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2 mb-5">
-        {isTakeOne ? (
-          <Badge variant="secondary" className="text-[10px]"><Store className="h-2.5 w-2.5 mr-1" /> In-store</Badge>
-        ) : (
-          <Badge variant="secondary" className="text-[10px]"><Link2 className="h-2.5 w-2.5 mr-1" /> Digital</Badge>
-        )}
-        {featured.category && <Badge variant="outline" className="text-[10px]">{featured.category}</Badge>}
-        {featured.city && <Badge variant="outline" className="text-[10px]"><MapPin className="h-2.5 w-2.5 mr-1" />{featured.city}</Badge>}
-      </div>
-
-      <div className="border-t border-border pt-5">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Affiliate payout</p>
-        <p className="font-headline text-4xl tabular">
-          ₱{featured.rewardAmount.toFixed(2)}
-          <span className="text-base text-muted-foreground ml-1.5">{rewardLabel}</span>
-        </p>
-      </div>
-
-      {featured.isSeeded && (
-        <p className="text-[10px] text-muted-foreground mt-3 italic">
-          Beta sample offer — real campaigns replace this after Aug 15, 2026.
-        </p>
-      )}
-
-      <div className="mt-5 flex gap-0">
-        <Button
-          className="flex-1 h-11"
-          onClick={() => {
-            if (!user || user.role !== "affiliate") {
-              document.getElementById("start")?.scrollIntoView({ behavior: "smooth" })
-              return
-            }
-            if (featured.isSeeded) {
-              toast.warning("This is a seeded campaign for mockup", {
-                description: "Please choose one of the real active campaigns. Admin will remove these seed campaigns at the end of Beta Test stage on Aug 15, 2026.",
-                duration: 8000,
-              })
-              return
-            }
-            fetch("/api/links", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ campaignId: featured.id }),
-            }).then(() => {
-              toast.success("Deal taken!", { description: "Your tracking link is ready." })
-              window.location.hash = "#dashboard"
-              window.location.reload()
-            })
-          }}
-        >
-          Take deal <ArrowRight className="h-4 w-4 ml-1" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-11 w-11 border-l-0"
-          onClick={() => {
-            navigator.clipboard?.writeText(absShareUrl)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 1500)
-          }}
-          aria-label="Copy link"
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Shareable link</p>
-          <code className="text-[11px] text-muted-foreground truncate block max-w-[220px]">{absShareUrl}</code>
-        </div>
-        <span className="text-[10px] text-muted-foreground">/{featured.id.slice(-6)}</span>
       </div>
     </div>
   )
