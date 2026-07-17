@@ -176,97 +176,92 @@
   color: var(--foreground);
 }
 
-/* ===== Ticket animation — paper emerging from a slot ===== */
-@keyframes ticket-emerge {
+/* ===== Stacked ticket deck animation — cards drop in from the top ===== */
+@keyframes ticket-drop {
   0% {
-    transform: translateY(120%) rotate(-3deg) scale(0.92);
+    transform: translateY(-140%) rotate(var(--rot, 0deg)) scale(0.95);
     opacity: 0;
-  }
-  60% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(0) rotate(-2deg) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes ticket-settle {
-  0% {
-    transform: translateY(0) rotate(-2deg) scale(1);
   }
   50% {
-    transform: translateY(-4px) rotate(-1.5deg) scale(1.01);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(8px) rotate(var(--rot, 0deg)) scale(1);
+  }
+  85% {
+    transform: translateY(-3px) rotate(var(--rot, 0deg)) scale(1);
   }
   100% {
-    transform: translateY(0) rotate(-2deg) scale(1);
+    transform: translateY(0) rotate(var(--rot, 0deg)) scale(1);
+    opacity: 1;
   }
 }
 
-@keyframes ticket-shadow {
+@keyframes ticket-shadow-in {
   0% {
     opacity: 0;
-    transform: translateX(-50%) scaleX(0.4);
+    transform: translateX(-50%) scaleX(0.3);
   }
   100% {
-    opacity: 0.18;
+    opacity: var(--shadow-opacity, 0.18);
     transform: translateX(-50%) scaleX(1);
   }
 }
 
-/* The ticket wrapper — positioned in center of right column */
-.ticket-wrapper {
-  perspective: 1200px;
+/* The deck wrapper — holds the stack of cards */
+.ticket-deck {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 420px;
+  min-height: 520px;
+  padding-top: 60px;
 }
 
-/* The slot at the top — paper appears to come out of it */
+/* The slot at the top — cards appear to drop from it */
 .ticket-slot {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 70%;
-  height: 6px;
+  width: 65%;
+  height: 5px;
   background: var(--border);
   border-radius: 999px;
-  opacity: 0.5;
+  opacity: 0.4;
+  z-index: 10;
 }
 
-/* Soft shadow under the ticket */
-.ticket-shadow {
+/* Each card in the stack */
+.ticket-card {
   position: absolute;
-  bottom: 20px;
-  left: 50%;
-  width: 75%;
-  height: 24px;
-  background: radial-gradient(ellipse at center, rgba(0,0,0,0.25), transparent 70%);
-  filter: blur(8px);
-  transform: translateX(-50%);
-  animation: ticket-shadow 0.8s 0.4s ease-out both;
-  pointer-events: none;
-}
-
-/* The ticket itself */
-.ticket {
-  position: relative;
   width: 100%;
+  max-width: 340px;
   background: var(--card);
   border: 1px solid var(--border);
   transform-origin: top center;
-  animation: ticket-emerge 0.9s 0.2s cubic-bezier(0.34, 1.2, 0.64, 1) both,
-             ticket-settle 2s 1.1s ease-in-out infinite;
+  animation: ticket-drop 0.8s var(--delay, 0s) cubic-bezier(0.34, 1.15, 0.64, 1) both;
   box-shadow:
     0 1px 2px rgba(0,0,0,0.04),
-    0 8px 24px rgba(0,0,0,0.08),
-    0 24px 48px rgba(0,0,0,0.06);
+    0 8px 20px rgba(0,0,0,0.08);
 }
 
-/* Perforated divider between stub and main body */
+/* Soft shadow under the deck */
+.ticket-deck-shadow {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  width: 70%;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.2), transparent 70%);
+  filter: blur(6px);
+  transform: translateX(-50%);
+  animation: ticket-shadow-in 0.6s 0.6s ease-out both;
+  pointer-events: none;
+  --shadow-opacity: 0.15;
+}
+
+/* Perforated divider between stub and body */
 .ticket-perf {
   position: relative;
   border-top: 1px dashed var(--border);
@@ -294,25 +289,25 @@
   clip-path: inset(0 50% 0 0);
 }
 
-/* Subtle floating tilt on hover */
+/* Hover lift on the top card only */
+.ticket-card.is-top {
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 @media (hover: hover) {
-  .ticket:hover {
-    animation-play-state: paused;
-    transform: translateY(-6px) rotate(0deg) scale(1.02);
-    transition: transform 0.4s ease;
+  .ticket-card.is-top:hover {
+    transform: translateY(-8px) rotate(0deg) scale(1.02) !important;
     box-shadow:
       0 1px 2px rgba(0,0,0,0.04),
-      0 16px 40px rgba(0,0,0,0.12),
-      0 32px 64px rgba(0,0,0,0.08);
+      0 16px 36px rgba(0,0,0,0.12),
+      0 32px 56px rgba(0,0,0,0.08) !important;
+    z-index: 20;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ticket,
-  .ticket-shadow {
+  .ticket-card,
+  .ticket-deck-shadow {
     animation: none;
-  }
-  .ticket {
-    transform: rotate(-2deg);
   }
 }

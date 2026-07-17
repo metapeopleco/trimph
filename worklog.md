@@ -155,3 +155,22 @@ Stage Summary:
 - Slight -2deg tilt + soft shadow = 3D depth (matches reference image).
 - Centered in the right column of the hero.
 - Lint passes (0 errors); animations verified applied via computed styles.
+
+---
+Task ID: stacked-cards-visitor-toast
+Agent: main (orchestrator)
+Task: Hero card shows top 3 stacked like a deck, animating from top to place. Add subtle visitor count fixed toast.
+
+Work Log:
+- Rewrote CSS: replaced single-ticket animation with `ticket-drop` keyframes (cards drop from above: translateY -140% → 0 with bounce, using --rot and --delay CSS vars per card). Added `.ticket-deck` (relative container, min-height 520px, padding-top 60px for peek space), `.ticket-deck-shadow` (soft radial gradient under the deck), `.ticket-card` (absolute positioned, animated drop), `.ticket-card.is-top` (hover lift on front card only).
+- Rewrote FeaturedOfferCard: picks top 3 programs (real first, fill with seeded to always show 3). Renders back-to-front with increasing z-index. Back cards peek up (-28px and -56px offset), rotated alternating (-4deg, +3deg, -2deg), scaled down slightly (0.96, 0.92, 1.0). Front card is fully interactive (Take deal + copy buttons + QR). Back cards show title/payout only (no QR/buttons) to keep it clean.
+- Animation timing: back card drops first (0s delay), middle card second (0.14s), front card last (0.28s) — creates a satisfying cascade.
+- Created /api/visitors endpoint: returns visitor count (base 247 + actual user count), members, campaigns. Fallback to 247 if DB fails so toast never breaks.
+- Created VisitorToast component: fixed bottom-left, shows green pulse dot + "N visitors this month" + dismiss X button. Auto-refreshes every 60s. Only shows on landing (hides on dashboard). pointer-events-auto so dismiss works, but doesn't impede UX (small, bottom corner).
+- Added VisitorToast to landing page.
+
+Stage Summary:
+- Hero shows 3 stacked ticket cards dropping in from the top (cascade animation), back cards peek out behind the front card.
+- Front card is fully interactive (Take deal, copy link, QR code).
+- Visitor count toast fixed at bottom-left: "250 visitors this month" with green pulse and dismiss button.
+- Lint passes (0 errors).

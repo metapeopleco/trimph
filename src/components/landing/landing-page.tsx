@@ -16,6 +16,7 @@ import { ConfettiCursor } from "@/components/shared/confetti-cursor"
 import { CityCombobox } from "@/components/shared/city-combobox"
 import { AuthForm } from "@/components/shared/auth-form"
 import { QrCodeSvg, exportQrPdf } from "@/components/shared/qr-code"
+import { VisitorToast } from "@/components/shared/visitor-toast"
 import { useAuth } from "@/components/auth-provider"
 import { cn, absoluteUrl } from "@/lib/utils"
 
@@ -419,6 +420,7 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+      <VisitorToast />
     </div>
   )
 }
@@ -426,21 +428,26 @@ export function LandingPage() {
 function FeaturedOfferCard({ programs }: { programs: Program[] }) {
   const { user } = useAuth()
   const [copied, setCopied] = React.useState(false)
-  // pick the highest-payout real (non-seeded) program, else the first seeded one
-  const featured = React.useMemo(() => {
-    if (programs.length === 0) return null
+  // Pick the top 3 highest-payout programs.
+  // Prefer real (non-seeded) programs first, then fill with seeded ones to
+  // always show a full stack of 3 when possible.
+  const top3 = React.useMemo(() => {
+    if (programs.length === 0) return [] as Program[]
     const real = programs.filter((p) => !p.isSeeded)
-    const pool = real.length > 0 ? real : programs
-    return [...pool].sort((a, b) => b.rewardAmount - a.rewardAmount)[0]
+    const seeded = programs.filter((p) => p.isSeeded)
+    // Sort each by payout desc, then take real first, fill with seeded
+    const sortedReal = [...real].sort((a, b) => b.rewardAmount - a.rewardAmount)
+    const sortedSeeded = [...seeded].sort((a, b) => b.rewardAmount - a.rewardAmount)
+    return [...sortedReal, ...sortedSeeded].slice(0, 3)
   }, [programs])
 
-  if (!featured) {
+  if (top3.length === 0) {
     return (
-      <div className="ticket-wrapper">
+      <div className="ticket-deck">
         <div className="ticket-slot" />
-        <div className="ticket p-8 w-full max-w-sm">
+        <div className="ticket-card p-8" style={{ ["--rot" as any]: "0deg" }}>
           <div className="flex items-center justify-between mb-6">
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offer</span>
+            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offers</span>
             <span className="h-2 w-2 bg-emerald-500 animate-pulse" />
           </div>
           <p className="font-headline text-3xl mb-2">Loading offers…</p>
@@ -450,112 +457,151 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
     )
   }
 
-  const isTakeOne = featured.type === "take_one"
-  // Relative path stored; absoluteUrl() resolves it for display/copy/QR.
-  const shareUrl = `/c/${featured.id}?aff=${user?.id || ""}`
-  const absShareUrl = absoluteUrl(shareUrl)
-  const rewardLabel =
-    featured.rewardType === "click" ? `/ click`
-    : featured.rewardType === "email" ? `/ email`
-    : `/ walk-in`
+  // The top card is the featured one (index 0). Cards behind peek out from the top.
+  // Stack from back to front: top3[2] (back), top3[1] (middle), top3[0] (front)
+  const stack = [...top3].reverse() // now [2, 1, 0] — render back to front
+  const featured = top3[0]
+
+  const handleTake = (p: Program) => {
+    if (!user || user.role !== "affiliate") {
+      document.getElementById("start")?.scrollIntoView({ behavior: "smooth" })
+      return
+    }
+    if (p.isSeeded) {
+      toast.warning("This is a seeded campaign for mockup", {
+        description: "Please choose one of the real active campaigns. Admin will remove these seed campaigns at the end of Beta Test stage on Aug 15, 2026.",
+        duration: 8000,
+      })
+      return
+    }
+    fetch("/api/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ campaignId: p.id }),
+    }).then(() => {
+      toast.success("Deal taken!", { description: "Your tracking link is ready." })
+      window.location.hash = "#dashboard"
+      window.location.reload()
+    })
+  }
 
   return (
-    <div className="ticket-wrapper">
+    <div className="ticket-deck">
       <div className="ticket-slot" />
-      <div className="ticket-shadow" />
-      <div className="ticket w-full max-w-sm">
-        {/* Ticket header / stub */}
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Featured offer</span>
-            <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <span className={cn("h-1.5 w-1.5", featured.vendor.isOnline ? "bg-emerald-500" : "bg-muted-foreground/40")} />
-              {featured.vendor.isOnline ? "vendor online" : "vendor offline"}
-            </span>
-          </div>
+      <div className="ticket-deck-shadow" />
 
-          <div className="flex items-start gap-4 mb-4">
-            <div className="min-w-0 flex-1">
-              <h3 className="font-headline text-xl leading-tight mb-1.5">{featured.title}</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">{featured.description}</p>
+      {stack.map((p, i) => {
+        // i=0 is the back card (top3[2]), i=2 is the front card (top3[0])
+        const frontIndex = stack.length - 1 - i // 0 for back, 2 for front
+        const isTop = frontIndex === stack.length - 1
+        // Offset: back cards peek up from behind, front card is lowest
+        const yOffset = frontIndex * -28 // back cards shift up more to peek out
+        const rot = frontIndex === 0 ? -4 : frontIndex === 1 ? 3 : -2
+        const delay = i * 0.14 // back card drops first, front card last
+        const scale = 1 - frontIndex * 0.04 // back cards slightly smaller
+        const zIndex = frontIndex + 1
+        const shareUrl = `/c/${p.id}?aff=${user?.id || ""}`
+        const absShareUrl = absoluteUrl(shareUrl)
+        const rewardLabel =
+          p.rewardType === "click" ? `/ click`
+          : p.rewardType === "email" ? `/ email`
+          : `/ walk-in`
+        const isTakeOne = p.type === "take_one"
+
+        return (
+          <div
+            key={p.id}
+            className={cn("ticket-card", isTop && "is-top")}
+            style={{
+              ["--rot" as any]: `${rot}deg`,
+              ["--delay" as any]: `${delay}s`,
+              zIndex,
+              transform: `translateY(${yOffset}px) rotate(${rot}deg) scale(${scale})`,
+            }}
+            onClick={() => isTop && handleTake(p)}
+          >
+            {/* Ticket header / stub */}
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  {isTop ? "Featured offer" : `Offer #${frontIndex + 1}`}
+                </span>
+                {isTop && (
+                  <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className={cn("h-1.5 w-1.5", p.vendor.isOnline ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+                    {p.vendor.isOnline ? "online" : "offline"}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-start gap-4 mb-4">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-headline text-xl leading-tight mb-1.5">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>
+                </div>
+                {isTop && (
+                  <div className="border border-border p-1.5 bg-white shrink-0">
+                    <QrCodeSvg value={absShareUrl} size={64} />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {isTakeOne ? (
+                  <Badge variant="secondary" className="text-[10px]"><Store className="h-2.5 w-2.5 mr-1" /> In-store</Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-[10px]"><Link2 className="h-2.5 w-2.5 mr-1" /> Digital</Badge>
+                )}
+                {p.category && <Badge variant="outline" className="text-[10px]">{p.category}</Badge>}
+                {p.city && <Badge variant="outline" className="text-[10px]"><MapPin className="h-2.5 w-2.5 mr-1" />{p.city}</Badge>}
+              </div>
             </div>
-            <div className="border border-border p-1.5 bg-white shrink-0">
-              <QrCodeSvg value={absShareUrl} size={72} />
+
+            {/* Perforated divider */}
+            <div className="ticket-perf" />
+
+            {/* Ticket body — payout */}
+            <div className="p-5">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Affiliate payout</p>
+              <p className="font-headline text-4xl tabular">
+                ₱{p.rewardAmount.toFixed(2)}
+                <span className="text-base text-muted-foreground ml-1.5">{rewardLabel}</span>
+              </p>
+
+              {isTop && p.isSeeded && (
+                <p className="text-[10px] text-muted-foreground mt-2 italic">
+                  Beta sample — real campaigns replace this after Aug 15, 2026.
+                </p>
+              )}
+
+              {isTop && (
+                <div className="mt-4 flex gap-0">
+                  <Button
+                    className="flex-1 h-11"
+                    onClick={(e) => { e.stopPropagation(); handleTake(p) }}
+                  >
+                    Take deal <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-11 w-11 border-l-0"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      navigator.clipboard?.writeText(absShareUrl)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 1500)
+                    }}
+                    aria-label="Copy link"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
-
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {isTakeOne ? (
-              <Badge variant="secondary" className="text-[10px]"><Store className="h-2.5 w-2.5 mr-1" /> In-store</Badge>
-            ) : (
-              <Badge variant="secondary" className="text-[10px]"><Link2 className="h-2.5 w-2.5 mr-1" /> Digital</Badge>
-            )}
-            {featured.category && <Badge variant="outline" className="text-[10px]">{featured.category}</Badge>}
-            {featured.city && <Badge variant="outline" className="text-[10px]"><MapPin className="h-2.5 w-2.5 mr-1" />{featured.city}</Badge>}
-          </div>
-        </div>
-
-        {/* Perforated divider */}
-        <div className="ticket-perf" />
-
-        {/* Ticket body — payout + actions */}
-        <div className="p-5">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Affiliate payout</p>
-          <p className="font-headline text-4xl tabular">
-            ₱{featured.rewardAmount.toFixed(2)}
-            <span className="text-base text-muted-foreground ml-1.5">{rewardLabel}</span>
-          </p>
-
-          {featured.isSeeded && (
-            <p className="text-[10px] text-muted-foreground mt-2 italic">
-              Beta sample — real campaigns replace this after Aug 15, 2026.
-            </p>
-          )}
-
-          <div className="mt-4 flex gap-0">
-            <Button
-              className="flex-1 h-11"
-              onClick={() => {
-                if (!user || user.role !== "affiliate") {
-                  document.getElementById("start")?.scrollIntoView({ behavior: "smooth" })
-                  return
-                }
-                if (featured.isSeeded) {
-                  toast.warning("This is a seeded campaign for mockup", {
-                    description: "Please choose one of the real active campaigns. Admin will remove these seed campaigns at the end of Beta Test stage on Aug 15, 2026.",
-                    duration: 8000,
-                  })
-                  return
-                }
-                fetch("/api/links", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ campaignId: featured.id }),
-                }).then(() => {
-                  toast.success("Deal taken!", { description: "Your tracking link is ready." })
-                  window.location.hash = "#dashboard"
-                  window.location.reload()
-                })
-              }}
-            >
-              Take deal <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-11 w-11 border-l-0"
-              onClick={() => {
-                navigator.clipboard?.writeText(absShareUrl)
-                setCopied(true)
-                setTimeout(() => setCopied(false), 1500)
-              }}
-              aria-label="Copy link"
-            >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-      </div>
+        )
+      })}
     </div>
   )
 }
