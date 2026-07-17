@@ -50,8 +50,9 @@ export async function POST(req: Request) {
       await db.chatRoomMember.create({ data: { roomId: room.id, userId: user.id } })
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ""
-    const trackUrl = `${baseUrl}/c/${campaign.id}?aff=${user.id}&s=${link.uniqueSlug}`
+    // Relative tracking URL — the frontend prepends the origin at display time.
+    // This keeps the stored/served URL portable across domains.
+    const trackUrl = `/c/${campaign.id}?aff=${user.id}&s=${link.uniqueSlug}`
 
     return NextResponse.json({
       link,
@@ -80,10 +81,9 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   })
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || ""
   const withUrls = links.map((l) => ({
     ...l,
-    trackUrl: `${baseUrl}/c/${l.campaignId}?aff=${user.id}&s=${l.uniqueSlug}`,
+    trackUrl: `/c/${l.campaignId}?aff=${user.id}&s=${l.uniqueSlug}`,
   }))
 
   return NextResponse.json({ links: withUrls })

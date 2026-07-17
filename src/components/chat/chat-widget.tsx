@@ -73,10 +73,22 @@ export function ChatWidget() {
   // Socket connection
   React.useEffect(() => {
     if (!user) return
-    const socket = io("/?XTransformPort=3003", {
-      transports: ["websocket", "polling"],
-      reconnection: true,
-    })
+    // In production/preview, requests go through the Caddy gateway which routes
+    // based on the XTransformPort query param. On localhost:3000 (direct dev),
+    // we connect to the chat service port directly.
+    const isDirectDev =
+      typeof window !== "undefined" &&
+      window.location.hostname === "localhost" &&
+      window.location.port === "3000"
+    const socket = isDirectDev
+      ? io("http://localhost:3003", {
+          transports: ["websocket", "polling"],
+          reconnection: true,
+        })
+      : io("/?XTransformPort=3003", {
+          transports: ["websocket", "polling"],
+          reconnection: true,
+        })
     socketRef.current = socket
 
     socket.on("connect", () => {

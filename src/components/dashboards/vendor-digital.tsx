@@ -167,12 +167,6 @@ function CampaignsTab({ campaigns, onOpen, onRefresh }: any) {
               <Button variant="outline" size="sm" onClick={() => exportQrPdf([{ title: c.title, url }])}>
                 <Download className="h-3.5 w-3.5 mr-1" /> QR PDF
               </Button>
-              <Button variant="outline" size="sm" onClick={async () => {
-                if (!confirm("Delete this campaign?")) return
-                await fetch(`/api/campaigns/${c.id}`, { method: "DELETE" })
-                toast.success("Campaign deleted")
-                onRefresh()
-              }}><Trash2 className="h-3.5 w-3.5 mr-1" /> Delete</Button>
             </div>
           </div>
         )

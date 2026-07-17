@@ -17,7 +17,7 @@ import { CityCombobox } from "@/components/shared/city-combobox"
 import { AuthForm } from "@/components/shared/auth-form"
 import { QrCodeSvg, exportQrPdf } from "@/components/shared/qr-code"
 import { useAuth } from "@/components/auth-provider"
-import { cn } from "@/lib/utils"
+import { cn, absoluteUrl } from "@/lib/utils"
 
 interface Program {
   id: string
@@ -448,7 +448,9 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
   }
 
   const isTakeOne = featured.type === "take_one"
-  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/c/${featured.id}?aff=${user?.id || ""}`
+  // Relative path stored; absoluteUrl() resolves it for display/copy/QR.
+  const shareUrl = `/c/${featured.id}?aff=${user?.id || ""}`
+  const absShareUrl = absoluteUrl(shareUrl)
   const rewardLabel =
     featured.rewardType === "click" ? `/ click`
     : featured.rewardType === "email" ? `/ email`
@@ -470,7 +472,7 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
           <p className="text-sm text-muted-foreground">{featured.description}</p>
         </div>
         <div className="border border-border p-2 bg-white shrink-0">
-          <QrCodeSvg value={shareUrl} size={96} />
+          <QrCodeSvg value={absShareUrl} size={96} />
         </div>
       </div>
 
@@ -531,7 +533,7 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
           size="icon"
           className="h-11 w-11 border-l-0"
           onClick={() => {
-            navigator.clipboard?.writeText(shareUrl)
+            navigator.clipboard?.writeText(absShareUrl)
             setCopied(true)
             setTimeout(() => setCopied(false), 1500)
           }}
@@ -544,7 +546,7 @@ function FeaturedOfferCard({ programs }: { programs: Program[] }) {
       <div className="mt-5 pt-5 border-t border-border flex items-center justify-between">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Shareable link</p>
-          <code className="text-[11px] text-muted-foreground truncate block max-w-[220px]">{shareUrl}</code>
+          <code className="text-[11px] text-muted-foreground truncate block max-w-[220px]">{absShareUrl}</code>
         </div>
         <span className="text-[10px] text-muted-foreground">/{featured.id.slice(-6)}</span>
       </div>
@@ -646,7 +648,8 @@ function ProgramCard({ program }: { program: Program }) {
     }
   }
 
-  const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/c/${program.id}?aff=${user?.id || ""}`
+  const shareUrl = `/c/${program.id}?aff=${user?.id || ""}`
+  const absShareUrl = absoluteUrl(shareUrl)
 
   return (
     <div className="border-r border-b border-border bg-card p-6 flex flex-col">
@@ -701,7 +704,7 @@ function ProgramCard({ program }: { program: Program }) {
       {showQr && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col items-center gap-2">
           <div className="border border-border p-2 bg-white">
-            <QrCodeSvg value={shareUrl} size={140} />
+            <QrCodeSvg value={absShareUrl} size={140} />
           </div>
           <p className="text-[10px] text-muted-foreground text-center">Scan to open offer page</p>
           <div className="flex gap-0 w-full">
@@ -709,7 +712,7 @@ function ProgramCard({ program }: { program: Program }) {
               variant="outline"
               size="sm"
               className="flex-1 h-8 text-xs"
-              onClick={() => { navigator.clipboard?.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+              onClick={() => { navigator.clipboard?.writeText(absShareUrl); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
             >
               {copied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
               {copied ? "Copied" : "Copy link"}
@@ -718,7 +721,7 @@ function ProgramCard({ program }: { program: Program }) {
               variant="outline"
               size="sm"
               className="flex-1 h-8 text-xs border-l-0"
-              onClick={() => exportQrPdf([{ title: program.title, subtitle: program.city || undefined, url: shareUrl }])}
+              onClick={() => exportQrPdf([{ title: program.title, subtitle: program.city || undefined, url: absShareUrl }])}
             >
               <Download className="h-3 w-3 mr-1" /> PDF
             </Button>

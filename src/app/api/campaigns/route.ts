@@ -57,13 +57,23 @@ export async function POST(req: Request) {
     const isTakeOne = type === "take_one"
     const expectedRewardType = isTakeOne ? "walk_in" : rewardType
 
+    // Normalize target URL — ensure it has a protocol so redirects go to the
+    // vendor's external domain, not a relative path on trim.ph.
+    let normalizedTargetUrl: string | null = null
+    if (!isTakeOne && targetUrl) {
+      const trimmed = targetUrl.trim()
+      if (trimmed) {
+        normalizedTargetUrl = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+      }
+    }
+
     const campaign = await db.campaign.create({
       data: {
         vendorId: user.id,
         title: title.trim(),
         description: description.trim(),
         type: isTakeOne ? "take_one" : "digital",
-        targetUrl: isTakeOne ? null : (targetUrl?.trim() || null),
+        targetUrl: normalizedTargetUrl,
         rewardType: expectedRewardType,
         rewardAmount: Number(rewardAmount),
         maxUses: maxUses ? Number(maxUses) : null,

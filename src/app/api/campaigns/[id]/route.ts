@@ -52,43 +52,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   return NextResponse.json({ campaign })
 }
 
-// PATCH — toggle active / update
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { user, error } = await requireRole(["vendor_digital", "vendor_traditional"])
-  if (!user) return NextResponse.json({ error }, { status: 401 })
-
-  const { id } = await params
-  const body = await req.json()
-  const campaign = await db.campaign.findUnique({ where: { id } })
-  if (!campaign) return NextResponse.json({ error: "Not found" }, { status: 404 })
-  if (campaign.vendorId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-
-  const data: any = {}
-  if (typeof body.isActive === "boolean") data.isActive = body.isActive
-  if (typeof body.title === "string") data.title = body.title.trim()
-  if (typeof body.description === "string") data.description = body.description.trim()
-  if (body.maxUses != null) data.maxUses = Number(body.maxUses)
-
-  const updated = await db.campaign.update({ where: { id }, data })
-  return NextResponse.json({ campaign: updated })
+// PATCH — disabled: campaigns are immutable once published.
+// Vendors cannot edit or delete a campaign after it goes live, to protect
+// affiliates who have already taken the deal and generated tracking links.
+export async function PATCH() {
+  return NextResponse.json(
+    { error: "Campaigns cannot be edited once published. This protects affiliates who have already taken the deal." },
+    { status: 403 }
+  )
 }
 
-// DELETE — delete campaign
-export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { user, error } = await requireRole(["vendor_digital", "vendor_traditional"])
-  if (!user) return NextResponse.json({ error }, { status: 401 })
-
-  const { id } = await params
-  const campaign = await db.campaign.findUnique({ where: { id } })
-  if (!campaign) return NextResponse.json({ error: "Not found" }, { status: 404 })
-  if (campaign.vendorId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-
-  // delete related
-  await db.conversion.deleteMany({ where: { campaignId: id } })
-  await db.takeOneCode.deleteMany({ where: { campaignId: id } })
-  await db.trackingLink.deleteMany({ where: { campaignId: id } })
-  await db.chatRoom.deleteMany({ where: { campaignId: id } })
-  await db.campaign.delete({ where: { id } })
-
-  return NextResponse.json({ ok: true })
+// DELETE — disabled: campaigns are immutable once published.
+export async function DELETE() {
+  return NextResponse.json(
+    { error: "Campaigns cannot be deleted once published. This protects affiliates who have already taken the deal." },
+    { status: 403 }
+  )
 }

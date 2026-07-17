@@ -4,8 +4,8 @@ import * as React from "react"
 import { toast } from "sonner"
 import {
   LayoutDashboard, Store, ScanLine, MessageSquare, Plus, X,
-  Download, QrCode, Banknote, ArrowDownToLine, Trash2,
-  CheckCircle2, AlertCircle, Search,
+  Download, QrCode, Banknote, ArrowDownToLine,
+  CheckCircle2, AlertCircle, Search, Users, Wallet, Check,
 } from "lucide-react"
 import { DashboardShell, StatCard, EmptyState } from "@/components/dashboards/dashboard-shell"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import { QrCodeSvg, exportQrPdf } from "@/components/shared/qr-code"
 import { ChatWidget } from "@/components/chat/chat-widget"
 import { useAuth } from "@/components/auth-provider"
 
-type Tab = "overview" | "campaigns" | "verify" | "chat"
+type Tab = "overview" | "campaigns" | "verify" | "affiliates" | "chat"
 
 export function VendorTraditionalDashboard() {
   const { user } = useAuth()
@@ -37,6 +37,7 @@ export function VendorTraditionalDashboard() {
     { id: "overview", label: "Overview", icon: <LayoutDashboard className="h-4 w-4" /> },
     { id: "campaigns", label: "Take One", icon: <Store className="h-4 w-4" /> },
     { id: "verify", label: "Verify & redeem", icon: <ScanLine className="h-4 w-4" /> },
+    { id: "affiliates", label: "Affiliates & payouts", icon: <Users className="h-4 w-4" /> },
     { id: "chat", label: "Messages", icon: <MessageSquare className="h-4 w-4" /> },
   ]
 
@@ -58,6 +59,7 @@ export function VendorTraditionalDashboard() {
         <CampaignsTab campaigns={campaigns} onOpen={(c) => setActiveCampaign(c)} onRefresh={load} />
       )}
       {tab === "verify" && <VerifyTab />}
+      {tab === "affiliates" && <AffiliatesPayoutsTab campaigns={campaigns} onChanged={load} />}
       {tab === "chat" && (
         <div>
           <h2 className="font-headline text-xl mb-3">Group chats with affiliates</h2>
@@ -135,12 +137,6 @@ function CampaignsTab({ campaigns, onOpen, onRefresh }: any) {
           </p>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => onOpen(c)}>View codes</Button>
-            <Button variant="outline" size="sm" onClick={async () => {
-              if (!confirm("Delete this campaign?")) return
-              await fetch(`/api/campaigns/${c.id}`, { method: "DELETE" })
-              toast.success("Campaign deleted")
-              onRefresh()
-            }}><Trash2 className="h-3.5 w-3.5 mr-1" /> Delete</Button>
           </div>
         </div>
       ))}
@@ -278,6 +274,204 @@ function TakeOneDetailModal({ campaignId, onClose, onChanged }: { campaignId: st
         </div>
       </div>
     </div>
+  )
+}
+
+function AffiliatesPayoutsTab({ campaigns, onChanged }: { campaigns: any[]; onChanged: () => void }) {
+  const [expanded, setExpanded] = React.useState<string | null>(null)
+  const [detail, setDetail] = React.useState<any>(null)
+  const [selectedConv, setSelectedConv] = React.useState<string[]>([])
+  const [paying, setPaying] = React.useState(false)
+
+  const openCampaign = async (id: string) => {
+    if (expanded === id) {
+      setExpanded(null)
+      setDetail(null)
+      return
+    }
+    setExpanded(id)
+    setSelectedConv([])
+    const res = await fetch(`/api/campaigns/${id}`)
+    const data = await res.json()
+    setDetail(data.campaign)
+  }
+
+  // group conversions by affiliate
+  const byAffiliate = React.useMemo(() => {
+    const map = new Map<string, any>()
+    if (!detail?.conversions) return map
+    for (const c of detail.conversions) {
+      if (!c.affiliateId) continue
+      if (!map.has(c.affiliateId)) map.set(c.affiliateId, { affiliate: c.affiliate, convs: [] })
+      map.get(c.affiliateId).convs.push(c)
+    }
+    return map
+  }, [detail])
+
+  const markPaid = async (affiliateId: string) => {
+    const verified = (detail.conversions || []).filter(
+      (c: any) => c.status === "verified" && c.affiliateId === affiliateId && selectedConv.includes(c.id)
+    )
+    if (verified.length === 0) {
+      toast.error("Select verified walk-ins to mark as paid")
+      return
+    }
+    const amount = verified.length * detail.rewardAmount
+    setPaying(true)
+    try {
+      const res = await fetch("/api/payouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          affiliateId,
+          campaignId: detail.id,
+          conversionIds: verified.map((c: any) => c.id),
+          amount,
+        }),
+      })
+      const json = await res.json()
+      if (json.error) { toast.error(json.error); return }
+      toast.success(`Marked ₱${amount.toFixed(2)} as paid`)
+      setSelectedConv([])
+      await openCampaign(expanded!)
+      onChanged()
+    } catch {
+      toast.error("Failed to log payout")
+    } finally {
+      setPaying(false)
+    }
+  }
+
+  if (campaigns.length === 0) {
+    return <EmptyState title="No Take One campaigns yet" description="Create a campaign to start tracking affiliate walk-ins." />
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-headline text-xl mb-1">Affiliates & payouts</h2>
+        <p className="text-sm text-muted-foreground">
+          Track walk-ins per affiliate and log payments. Select verified walk-ins and mark them as paid.
+        </p>
+      </div>
+
+      {campaigns.map((c: any) => {
+        const isOpen = expanded === c.id
+        return (
+          <div key={c.id} className="rounded-xl border border-border bg-card overflow-hidden">
+            <button
+              onClick={() => openCampaign(c.id)}
+              className="w-full text-left p-4 flex items-center justify-between hover:bg-accent/40 transition-colors"
+            >
+              <div>
+                <p className="text-sm">{c.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  ₱{c.rewardAmount.toFixed(2)} / walk-in · {c._count?.conversions || 0} redemptions · {c._count?.takeOneCodes || 0} codes
+                </p>
+              </div>
+              <span className="text-xs text-muted-foreground">{isOpen ? "Hide" : "View"}</span>
+            </button>
+
+            {isOpen && (
+              <div className="border-t border-border p-4 space-y-4">
+                {!detail ? (
+                  <p className="text-sm text-muted-foreground">Loading…</p>
+                ) : byAffiliate.size === 0 ? (
+                  <p className="text-sm text-muted-foreground">No affiliates have driven walk-ins yet.</p>
+                ) : (
+                  Array.from(byAffiliate.values()).map(({ affiliate, convs }: any) => {
+                    const verified = convs.filter((c: any) => c.status === "verified")
+                    const paid = convs.filter((c: any) => c.status === "paid")
+                    return (
+                      <div key={affiliate?.id} className="rounded-lg border border-border p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-sm">{affiliate?.name || affiliate?.email}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {verified.length} pending · {paid.length} paid · {affiliate?.city || "no city"}
+                            </p>
+                          </div>
+                          <AffiliateWalletButton affiliateId={affiliate?.id} />
+                        </div>
+                        {verified.length > 0 && (
+                          <>
+                            <div className="space-y-1 mb-2">
+                              {verified.map((c: any) => (
+                                <label key={c.id} className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-accent/40 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedConv.includes(c.id)}
+                                    onChange={() => setSelectedConv((arr) =>
+                                      arr.includes(c.id) ? arr.filter((x) => x !== c.id) : [...arr, c.id]
+                                    )}
+                                  />
+                                  <span className="flex-1 tabular">{c.offlineCode || "walk-in"}</span>
+                                  <span className="text-muted-foreground">{new Date(c.redeemedAt || c.createdAt).toLocaleDateString()}</span>
+                                  <span>₱{detail.rewardAmount.toFixed(2)}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <Button
+                              size="sm"
+                              disabled={selectedConv.filter((id) => verified.some((c: any) => c.id === id)).length === 0 || paying}
+                              onClick={() => markPaid(affiliate?.id)}
+                            >
+                              Mark {selectedConv.filter((id) => verified.some((c: any) => c.id === id)).length} as paid (₱{(selectedConv.filter((id) => verified.some((c: any) => c.id === id)).length * detail.rewardAmount).toFixed(2)})
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function AffiliateWalletButton({ affiliateId }: { affiliateId: string }) {
+  const [open, setOpen] = React.useState(false)
+  const [data, setData] = React.useState<any>(null)
+  React.useEffect(() => {
+    if (open && affiliateId) {
+      fetch("/api/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: affiliateId }),
+      }).then((r) => r.json()).then(setData)
+    }
+  }, [open, affiliateId])
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Wallet className="h-3.5 w-3.5 mr-1" /> Payout info
+      </Button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setOpen(false)}>
+          <div className="bg-card border border-border rounded-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-headline text-lg mb-1">Payout details</h3>
+            <p className="text-xs text-muted-foreground mb-4">{data?.affiliate?.name || data?.affiliate?.email}</p>
+            {data?.wallet?.entries?.length ? (
+              <div className="space-y-2">
+                {data.wallet.entries.map((e: any, i: number) => (
+                  <div key={i} className="rounded-lg border border-border p-2.5">
+                    <p className="text-xs text-muted-foreground">{e.name}</p>
+                    <p className="text-sm tabular break-all">{e.value}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No payout info provided yet.</p>
+            )}
+            <Button className="w-full mt-4" onClick={() => setOpen(false)}>Close</Button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

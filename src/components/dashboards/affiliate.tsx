@@ -14,7 +14,7 @@ import { CityCombobox } from "@/components/shared/city-combobox"
 import { QrCodeSvg, exportQrPdf } from "@/components/shared/qr-code"
 import { ChatWidget } from "@/components/chat/chat-widget"
 import { useAuth } from "@/components/auth-provider"
-import { cn } from "@/lib/utils"
+import { cn, absoluteUrl } from "@/lib/utils"
 
 type Tab = "overview" | "browse" | "links" | "earnings" | "wallet" | "chat"
 
@@ -318,7 +318,7 @@ function LinksTab({ links, onChange }: { links: Link[]; onChange: () => void }) 
       links.map((l) => ({
         title: l.campaign.title,
         subtitle: l.campaign.vendor.name || undefined,
-        url: l.trackUrl,
+        url: absoluteUrl(l.trackUrl),
       }))
     )
   }
@@ -365,8 +365,8 @@ function LinksTab({ links, onChange }: { links: Link[]; onChange: () => void }) 
             </div>
 
             <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 mb-3">
-              <code className="text-xs flex-1 truncate text-muted-foreground">{l.trackUrl}</code>
-              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => copy(l.id, l.trackUrl)}>
+              <code className="text-xs flex-1 truncate text-muted-foreground">{absoluteUrl(l.trackUrl)}</code>
+              <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => copy(l.id, absoluteUrl(l.trackUrl))}>
                 {copied === l.id ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               </Button>
             </div>
@@ -378,7 +378,7 @@ function LinksTab({ links, onChange }: { links: Link[]; onChange: () => void }) 
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => exportQrPdf([{ title: l.campaign.title, subtitle: l.campaign.vendor.name || undefined, url: l.trackUrl }])}
+                onClick={() => exportQrPdf([{ title: l.campaign.title, subtitle: l.campaign.vendor.name || undefined, url: absoluteUrl(l.trackUrl) }])}
               >
                 <Download className="h-3.5 w-3.5 mr-1.5" /> PDF
               </Button>
@@ -390,7 +390,7 @@ function LinksTab({ links, onChange }: { links: Link[]; onChange: () => void }) 
             {showQr[l.id] && (
               <div className="mt-3 flex flex-col items-center gap-2 pt-3 border-t border-border">
                 <div className="rounded-lg border border-border p-2 bg-white">
-                  <QrCodeSvg value={l.trackUrl} size={180} />
+                  <QrCodeSvg value={absoluteUrl(l.trackUrl)} size={180} />
                 </div>
                 <p className="text-[10px] text-muted-foreground">High-res printable QR — scan to open offer</p>
               </div>

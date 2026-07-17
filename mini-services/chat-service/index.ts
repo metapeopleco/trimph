@@ -1,6 +1,6 @@
 import { createServer } from 'http'
 import { Server, Socket } from 'socket.io'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '/home/z/my-project/node_modules/@prisma/client'
 
 const db = new PrismaClient()
 

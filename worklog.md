@@ -93,3 +93,23 @@ Stage Summary:
 - Full-width container confirmed (no horizontal scroll).
 - "No fees" section buttons both readable (white-on-black and black-on-white).
 - Lint passes (0 errors).
+
+---
+Task ID: fix-4-issues
+Agent: main (orchestrator)
+Task: 1) Fix tracking URLs (relative /c/... not root domain) + redirect to vendor domain, 2) Vendors can't edit/delete published campaigns, 3) Physical store vendor needs affiliate tracking + payouts, 4) Chat not working.
+
+Work Log:
+- **Issue 1 — Tracking URLs**: Changed `/api/links` to return relative URLs (`/c/<id>?aff=<id>&s=<slug>`) instead of prepending NEXT_PUBLIC_APP_URL. Added `absoluteUrl()` helper in lib/utils that prepends `window.location.origin` at display time. Updated affiliate dashboard (LinksTab), landing page (FeaturedOfferCard, ProgramCard) to use `absoluteUrl()` for display/copy/QR/PDF — stored URL stays relative/portable, displayed URL is absolute. Fixed redirect: campaign creation API now normalizes targetUrl to ensure it has `https://` protocol (so `window.location.href` goes to the vendor's external domain, not a relative path on trim.ph).
+- **Issue 2 — No edit/delete**: Disabled PATCH and DELETE handlers in `/api/campaigns/[id]` — both return 403 with "Campaigns cannot be edited/deleted once published. This protects affiliates who have already taken the deal." Removed Delete buttons from vendor-digital and vendor-traditional dashboards.
+- **Issue 3 — Physical store payouts**: Added "Affiliates & payouts" tab to vendor_traditional dashboard. New `AffiliatesPayoutsTab` component: lists all Take One campaigns, expandable to show per-affiliate walk-in breakdown, select verified walk-ins via checkbox, "Mark N as paid (₱X)" button, and `AffiliateWalletButton` to view affiliate's payout wallet info. Also added `Users`/`Wallet`/`Check` icon imports.
+- **Issue 4 — Chat**: Root cause was (a) chat service not running (Prisma client not generated in mini-service), and (b) socket.io connection URL issue on localhost:3000. Fixed by: generating Prisma client for chat-service (pointed import to root project's @prisma/client), restarting the service on port 3003, and making the chat-widget detect localhost:3000 (direct dev) vs gateway and connect to `http://localhost:3003` directly in dev mode. Verified: socket connects ("live" status), messages send and appear in real-time.
+- Restored .env (NEXTAUTH_SECRET, NEXTAUTH_URL, NEXT_PUBLIC_APP_URL) which had been lost.
+
+Stage Summary:
+- Tracking URLs now stored as relative `/c/...` paths, displayed as absolute with origin.
+- Redirect goes to vendor's external domain (protocol normalized).
+- Campaigns are immutable once published (PATCH/DELETE return 403).
+- Physical store vendors have full affiliate tracking + payout capability.
+- Chat service running on 3003, socket connects live, messages work.
+- Lint passes (0 errors); all verified via Agent Browser.
