@@ -13,7 +13,7 @@ Work Log:
 - Built socket.io chat mini-service on port 3003 (mini-services/chat-service) with message persistence, presence/online status, typing indicators.
 - Built tracking router /c/[campaignId] with human-quiz interstitial, email lead wall, redirect (digital) and TRIM code + QR display (take_one).
 - Built QR code component (1000px high-res SVG source) + PDF export with embedded SVG QR codes.
-- Built landing page: hero ("Your link, your code, your cut.") + browse button below h1 + signup form, browse-by-city section with CityCombobox (full PH city list + custom input), 3-column program cards, network overview, Secure Click section, confetti-cursor animation, theme toggle, footer "Made with ♥ by the makers of JOph.app" with logo.
+- Built landing page: hero ("Your link, your code, your cut.") + browse button below h1 + signup form, browse-by-city section with CityCombobox (full PH city list + custom input), 3-column program cards, network overview, Secure Click section, confetti-cursor animation, theme toggle, footer "Made with ♥ by the Trim.ph community".
 - Built auth-aware SPA shell (single / route) routing to role-specific dashboards.
 - Built Vendor Digital dashboard: create campaigns (with max-uses), shareable links + QR, conversion funnel, captured leads export (CSV), mark affiliate conversions as paid, view affiliate payout wallets, group chat.
 - Built Vendor Traditional dashboard: Take One campaigns with TRIM-prefixed codes + max-uses, codes list + QR PDF export, verify/redeem console (large keypad-style input), group chat.
@@ -42,7 +42,7 @@ Work Log:
 - "Three sides, one network" section with 3 NetworkCards.
 - "Secure Click — humans only, bots blocked" with ₱0 display card.
 - Added "No fees. No catch. Ever." section on inverted black background with two CTAs.
-- Footer with logo, columns, JOph.app credit.
+- Footer with logo, columns, community credit.
 - Removed chat widget and ad banners from landing (per instructions).
 
 Stage Summary:

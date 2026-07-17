@@ -338,7 +338,7 @@ export function LandingPage() {
             <span className="italic text-background/60">Ever.</span>
           </h2>
           <p className="mt-8 text-lg sm:text-xl text-background/70 max-w-2xl mx-auto leading-relaxed">
-            Trim.ph is built by the makers of JOph.app as a free, community-driven affiliate network.
+            Trim.ph is a free, community-driven affiliate network.
             No subscriptions. No transaction cuts. No paywalls. Just creators, vendors, and affiliates growing together.
           </p>
           <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
@@ -381,11 +381,7 @@ export function LandingPage() {
           </div>
           <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              Made with <span className="text-foreground">♥</span> by the makers of
-              <span className="inline-flex items-center gap-1 ml-1">
-                <LogoMark size={14} />
-                <span className="font-headline">JOph.app</span>
-              </span>
+              Made with <span className="text-foreground">♥</span> by the Trim.ph community
             </p>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Trim.ph — Free forever</p>
           </div>

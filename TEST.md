@@ -77,7 +77,7 @@ These accounts already exist in the database from prior testing. You can log int
 - [ ] "Three sides, one network." section with Campaigns / Programs / Take One cards
 - [ ] "Humans only, bots blocked." Secure Click section with ₱0 display
 - [ ] "No fees. No catch. Ever." section on a black background with 2 readable buttons
-- [ ] Footer with logo + "Made with ♥ by the makers of JOph.app"
+- [ ] Footer with logo + "Made with ♥ by the Trim.ph community"
 
 ### Test 2.2 — Full-width container
 
