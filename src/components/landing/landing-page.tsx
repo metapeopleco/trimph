@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import {
   ArrowRight, Search, MapPin, ShieldCheck, Link2,
   Store, Users, Check, QrCode, Download, Copy, Sparkles,
-  MousePointerClick, Mail, Footprints,
+  MousePointerClick, Mail, Footprints, Facebook,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -96,6 +96,15 @@ export function LandingPage() {
             <button onClick={scrollToBrowse} className="text-muted-foreground hover:text-foreground transition-colors">Browse</button>
             <a href="#how" className="text-muted-foreground hover:text-foreground transition-colors">How it works</a>
             <a href="#fees" className="text-muted-foreground hover:text-foreground transition-colors">Free forever</a>
+            <a
+              href="https://facebook.com/trimph"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+              aria-label="Trim.ph on Facebook"
+            >
+              <Facebook className="h-4 w-4" /> Facebook
+            </a>
           </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -330,24 +339,27 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* No fees. No catch. Ever. */}
-      <section id="fees" className="border-b border-border bg-foreground text-background">
+      {/* No fees. No catch. Ever. — always dark regardless of theme */}
+      <section id="fees" className="border-b border-border bg-[#0a0a0a] text-white">
         <div className="px-6 sm:px-10 lg:px-16 py-24 sm:py-32 text-center">
           <h2 className="font-headline text-5xl sm:text-7xl lg:text-8xl leading-[0.92] tracking-tight">
             No fees.<br />No catch.<br />
-            <span className="italic text-background/60">Ever.</span>
+            <span className="italic text-white/50">Ever.</span>
           </h2>
-          <p className="mt-8 text-lg sm:text-xl text-background/70 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-8 text-lg sm:text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
             Trim.ph is a free, community-driven affiliate network.
             No subscriptions. No transaction cuts. No paywalls. Just creators, vendors, and affiliates growing together.
           </p>
           <div className="mt-12 flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" className="h-14 px-10 text-base bg-background text-foreground hover:bg-background/90" onClick={scrollToStart}>
+            <Button size="lg" className="h-14 px-10 text-base bg-white text-black hover:bg-white/90 border-0" onClick={scrollToStart}>
               Create your first campaign
             </Button>
-            <Button size="lg" variant="outline" className="h-14 px-10 text-base border-background/30 text-background hover:bg-background/10 hover:text-background" onClick={scrollToBrowse}>
+            <button
+              onClick={scrollToBrowse}
+              className="inline-flex items-center justify-center h-14 px-10 text-base border border-white/30 bg-transparent text-white hover:bg-white/10 transition-colors"
+            >
               Browse the marketplace
-            </Button>
+            </button>
           </div>
         </div>
       </section>
@@ -355,7 +367,7 @@ export function LandingPage() {
       {/* Footer — full width */}
       <footer className="mt-auto bg-background">
         <div className="px-6 sm:px-10 lg:px-16 py-14">
-          <div className="grid md:grid-cols-[1fr_auto_auto] gap-10">
+          <div className="grid md:grid-cols-[1fr_auto_auto_auto] gap-10">
             <div>
               <LogoWord size={28} />
               <p className="text-sm text-muted-foreground max-w-xs mt-3">
@@ -378,11 +390,31 @@ export function LandingPage() {
                 <li className="text-muted-foreground">Affiliates</li>
               </ul>
             </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Connect</p>
+              <a
+                href="https://facebook.com/trimph"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Facebook className="h-4 w-4" /> Facebook
+              </a>
+            </div>
           </div>
           <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground flex items-center gap-1.5">
               Made with <span className="text-foreground">♥</span> by the Trim.ph community
             </p>
+            <a
+              href="https://facebook.com/trimph"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+              aria-label="Trim.ph on Facebook"
+            >
+              <Facebook className="h-3.5 w-3.5" /> facebook.com/trimph
+            </a>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Trim.ph — Free forever</p>
           </div>
         </div>
