@@ -55,12 +55,17 @@ export async function POST(req: Request) {
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "0.0.0.0"
 
     if (conversionId) {
-      // update existing click conversion with the email
-      const updated = await db.conversion.update({
-        where: { id: conversionId },
+      // Update existing click conversion with the email — but only if it
+      // belongs to this campaign (ownership check prevents overwriting
+      // arbitrary conversions by supplying a random conversionId).
+      const result = await db.conversion.updateMany({
+        where: { id: conversionId, campaignId },
         data: { capturedEmail: email.toLowerCase() },
       })
-      return NextResponse.json({ ok: true, conversionId: updated.id })
+      if (result.count === 0) {
+        return NextResponse.json({ error: "Conversion not found for this campaign." }, { status: 404 })
+      }
+      return NextResponse.json({ ok: true, conversionId })
     }
 
     // Deduplication: don't create a new email lead from the same IP+campaign within 10 min
@@ -72,6 +77,7 @@ export async function POST(req: Request) {
         createdAt: { gte: tenMinAgo },
       },
       select: { id: true },
+      orderBy: { createdAt: "desc" },
     })
     if (recent) {
       // Update the existing one with the email instead of creating a duplicate

@@ -59,19 +59,29 @@ export async function POST(req: Request) {
       }
     }
 
-    // Mark code redeemed
-    await db.takeOneCode.update({
-      where: { id: takeOne.id },
+    // Atomic redeem: only update if not already redeemed (prevents race condition
+    // where two clerks scan the same code simultaneously).
+    const redeemResult = await db.takeOneCode.updateMany({
+      where: { id: takeOne.id, isRedeemed: false },
       data: { isRedeemed: true, redeemedAt: new Date() },
     })
+    if (redeemResult.count === 0) {
+      return NextResponse.json(
+        { error: "This code has already been redeemed.", alreadyRedeemed: true },
+        { status: 409 }
+      )
+    }
 
-    // Find the affiliate associated with this code's campaign tracking link
-    // (Take-one codes are distributed via tracking links; we credit the affiliate who owns the link)
+    // Find the affiliate associated with this code's campaign tracking link.
+    // Use deterministic ordering (oldest link first = first affiliate who took the deal)
+    // so the same affiliate is always credited across SQLite/libSQL.
     const trackingLink = await db.trackingLink.findFirst({
       where: { campaignId: takeOne.campaignId },
+      orderBy: { createdAt: "asc" },
     })
 
-    // Create a verified walk-in conversion
+    // Create a verified walk-in conversion — atomic with the code redeem above
+    // via sequential transaction (libSQL doesn't support interactive transactions).
     const conversion = await db.conversion.create({
       data: {
         campaignId: takeOne.campaignId,

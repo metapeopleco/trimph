@@ -38,22 +38,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 })
     }
 
-    const payout = await db.payout.create({
-      data: {
-        vendorId: user.id,
+    // Ownership validation: only mark conversions that belong to campaigns
+    // owned by this vendor AND match the supplied affiliateId.
+    const owned = await db.conversion.findMany({
+      where: {
+        id: { in: conversionIds },
         affiliateId,
-        campaignId: campaignId || null,
-        amount: Number(amount),
-        conversionIds: JSON.stringify(conversionIds),
-        note: note?.trim() || null,
+        campaign: { vendorId: user.id },
+        status: "verified", // only verified conversions can be paid
       },
+      select: { id: true },
     })
+    const ownedIds = owned.map((c) => c.id)
+    if (ownedIds.length !== conversionIds.length) {
+      return NextResponse.json(
+        { error: "Some conversions are not owned by you or are not in a payable state." },
+        { status: 403 }
+      )
+    }
 
-    // mark conversions as paid
-    await db.conversion.updateMany({
-      where: { id: { in: conversionIds } },
-      data: { status: "paid", paidAt: new Date() },
-    })
+    // Atomic: create payout + mark conversions paid in a single transaction.
+    // libSQL only supports the sequential array form, not interactive callbacks.
+    const [payout] = await db.$transaction([
+      db.payout.create({
+        data: {
+          vendorId: user.id,
+          affiliateId,
+          campaignId: campaignId || null,
+          amount: Number(amount),
+          conversionIds: JSON.stringify(conversionIds),
+          note: note?.trim() || null,
+        },
+      }),
+      db.conversion.updateMany({
+        where: { id: { in: ownedIds } },
+        data: { status: "paid", paidAt: new Date() },
+      }),
+    ])
 
     return NextResponse.json({ payout })
   } catch (e: any) {

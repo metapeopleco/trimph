@@ -1,8 +1,15 @@
 import { createServer } from 'http'
 import { Server, Socket } from 'socket.io'
-import { PrismaClient } from '/home/z/my-project/node_modules/@prisma/client'
+import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
-const db = new PrismaClient()
+// Connect directly to Turso (libSQL) — same source of truth as the main app.
+// The adapter takes a config object { url, authToken }, NOT a pre-created client.
+const adapter = new PrismaLibSQL({
+  url: process.env.DATABASE_URL || 'libsql://trimph-zipoi.aws-ap-south-1.turso.io',
+  authToken: process.env.DATABASE_AUTH_TOKEN || '',
+})
+const db = new PrismaClient({ adapter })
 
 const httpServer = createServer()
 const io = new Server(httpServer, {

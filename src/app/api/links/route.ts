@@ -17,37 +17,68 @@ export async function POST(req: Request) {
     }
 
     // If seeded campaign, we still create the link but the client shows a toast.
-    // Check if affiliate already has a link for this campaign
+    // Check if affiliate already has a link for this campaign (deterministic order)
     let link = await db.trackingLink.findFirst({
       where: { campaignId, affiliateId: user.id },
+      orderBy: { createdAt: "asc" },
     })
     if (!link) {
       let slug = genSlug(8)
-      // ensure uniqueness
+      // ensure uniqueness (best-effort; P2002 caught below)
       while (await db.trackingLink.findUnique({ where: { uniqueSlug: slug } })) {
         slug = genSlug(8)
       }
-      link = await db.trackingLink.create({
-        data: { campaignId, affiliateId: user.id, uniqueSlug: slug },
-      })
+      try {
+        link = await db.trackingLink.create({
+          data: { campaignId, affiliateId: user.id, uniqueSlug: slug },
+        })
+      } catch (e: any) {
+        // P2002 = unique constraint violation (slug collision or duplicate link)
+        // Re-fetch in case another concurrent request created the link
+        if (e?.code === "P2002") {
+          link = await db.trackingLink.findFirst({
+            where: { campaignId, affiliateId: user.id },
+            orderBy: { createdAt: "asc" },
+          })
+          if (!link) throw e
+        } else {
+          throw e
+        }
+      }
     }
 
-    // Ensure a group chat room exists for this campaign
-    let room = await db.chatRoom.findFirst({ where: { campaignId } })
-    if (!room) {
-      room = await db.chatRoom.create({
-        data: {
-          campaignId,
-          name: `${campaign.title} — Discussion`,
-        },
-      })
-    }
-    // add affiliate as member if not already
-    const member = await db.chatRoomMember.findUnique({
-      where: { roomId_userId: { roomId: room.id, userId: user.id } },
+    // Ensure a group chat room exists for this campaign (deterministic order)
+    let room = await db.chatRoom.findFirst({
+      where: { campaignId },
+      orderBy: { createdAt: "asc" },
     })
-    if (!member) {
+    if (!room) {
+      try {
+        room = await db.chatRoom.create({
+          data: {
+            campaignId,
+            name: `${campaign.title} — Discussion`,
+          },
+        })
+      } catch (e: any) {
+        // P2002 = another concurrent request created the room
+        if (e?.code === "P2002") {
+          room = await db.chatRoom.findFirst({
+            where: { campaignId },
+            orderBy: { createdAt: "asc" },
+          })
+          if (!room) throw e
+        } else {
+          throw e
+        }
+      }
+    }
+    // add affiliate as member if not already (idempotent via composite unique)
+    try {
       await db.chatRoomMember.create({ data: { roomId: room.id, userId: user.id } })
+    } catch (e: any) {
+      // P2002 = already a member; that's fine
+      if (e?.code !== "P2002") throw e
     }
 
     // Relative tracking URL — the frontend prepends the origin at display time.

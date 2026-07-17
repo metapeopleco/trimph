@@ -56,6 +56,7 @@ export async function POST(req: Request) {
         createdAt: { gte: tenMinAgo },
       },
       select: { id: true, affiliateId: true, capturedEmail: true, offlineCode: true },
+      orderBy: { createdAt: "desc" },
     })
     if (recent) {
       // Return the existing conversion instead of creating a duplicate

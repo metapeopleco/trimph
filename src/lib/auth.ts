@@ -38,11 +38,16 @@ export const authOptions: NextAuthOptions = {
       }
       // refresh role/city from db if missing
       if (!token.role && token.email) {
-        const u = await db.user.findUnique({ where: { email: token.email } })
-        if (u) {
-          token.id = u.id
-          token.role = u.role
-          token.city = u.city ?? undefined
+        try {
+          const u = await db.user.findUnique({ where: { email: token.email } })
+          if (u) {
+            token.id = u.id
+            token.role = u.role
+            token.city = u.city ?? undefined
+          }
+        } catch {
+          // DB error during JWT refresh — return existing token rather than
+          // breaking every authenticated request.
         }
       }
       return token
