@@ -98,7 +98,7 @@ export function LandingPage() {
             <a href="#how" className="text-muted-foreground hover:text-foreground transition-colors">How it works</a>
             <a href="#fees" className="text-muted-foreground hover:text-foreground transition-colors">Free forever</a>
             <a
-              href="https://facebook.com/trimph"
+              href="https://facebook.com/mytrimph"
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
@@ -394,7 +394,7 @@ export function LandingPage() {
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">Connect</p>
               <a
-                href="https://facebook.com/trimph"
+                href="https://facebook.com/mytrimph"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -408,13 +408,13 @@ export function LandingPage() {
               Made with <span className="text-foreground">♥</span> by the Trim.ph community
             </p>
             <a
-              href="https://facebook.com/trimph"
+              href="https://facebook.com/mytrimph"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
               aria-label="Trim.ph on Facebook"
             >
-              <Facebook className="h-3.5 w-3.5" /> facebook.com/trimph
+              <Facebook className="h-3.5 w-3.5" /> facebook.com/mytrimph
             </a>
             <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Trim.ph — Free forever</p>
           </div>
